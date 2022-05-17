@@ -46,10 +46,9 @@ resource "google_compute_instance" "dev" {
   tags         = ["externalssh","webserver"] # selecting the vm instances with tags
 
   # to create a startup disk with an Image/ISO. 
-  # here we are choosing the CentOS7 image
   boot_disk { 
     initialize_params {
-      image = "centos-cloud/centos-7"
+      image = "ubuntu-os-cloud/ubuntu-2004-lts"
     }
   }
 
@@ -68,6 +67,22 @@ resource "google_compute_instance" "dev" {
     ssh-keys = "${var.user}:${file(var.publickeypath)}"
   }
 
+
+  provisioner "file" {
+    connection {
+      host        = google_compute_address.static.address
+      type        = "ssh"
+      # username of the instance would vary for each account refer the OS Login in GCP documentation
+      user        = var.user 
+      timeout     = "500s"
+      # private_key being used to connect to the VM. ( the public key was copied earlier using metadata )
+      private_key = file(var.privatekeypath)
+    }
+
+    source  = "scripts/install-tools.sh"
+    destination = "/tmp/install-tools.sh"  
+  }
+
   # to connect to the instance after the creation and execute few commands for provisioning
   # here you can execute a custom Shell script or Ansible playbook
   provisioner "remote-exec" {
@@ -82,11 +97,10 @@ resource "google_compute_instance" "dev" {
     }
 
     # Commands to be executed as the instance gets ready.
-    # installing nginx
+    # installing mongoDB
     inline = [
-      "sudo yum -y install epel-release",
-      "sudo yum -y install nginx",
-      "sudo nginx -v",
+      "chmod +x /tmp/install-tools.sh",
+      "sudo bash /tmp/install-tools.sh"
     ]
   }
 
