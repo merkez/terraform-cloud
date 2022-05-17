@@ -27,3 +27,9 @@ $ terraform destroy
 
 ```
 
+##### Make sure your service account has following permissions set
+
+- Compute admin
+- Compute network admin
+- Kubernetes Engine cluster admin
+- Service account admin
